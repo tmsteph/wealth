@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wealth & Influence Observatory</title>
+  <style>
+    :root {
+      --bg-main: #0f172a;      /* deep navy */
+      --bg-card: #1e2539;      /* slate card */
+      --bg-card-alt: #252f49;
+      --text-primary: #f8fafc; /* near-white */
+      --text-dim: #94a3b8;     /* gray-blue */
+      --accent: #eab308;       /* golden */
+      --border-color: #334155;
+      --radius-lg: 1rem;
+      --radius-sm: .5rem;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", Roboto, "Segoe UI", sans-serif;
+      line-height: 1.5;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Layout */
+    aside {
+      width: 260px;
+      background: linear-gradient(to bottom right, #1e2539 30%, #121829 100%);
+      border-right: 1px solid var(--border-color);
+      padding: 1rem 1rem 6rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: minmax(300px, 380px) 1fr;
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    header.app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: .5rem;
+    }
+
+    /* Cards */
+    .card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1rem 1.25rem;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+    }
+
+    .card.alt {
+      background-color: var(--bg-card-alt);
+    }
+
+    .section-title {
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      margin-bottom: .75rem;
+    }
+
+    .section-title .dot {
+      width: .5rem;
+      height: .5rem;
+      background-color: var(--accent);
+      border-radius: 999px;
+      box-shadow: 0 0 12px var(--accent);
+    }
+
+    h1.brand {
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.2;
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1.brand span.sub {
+      font-size: .7rem;
+      font-weight: 400;
+      color: var(--text-dim);
+    }
+
+    small.badge {
+      font-size: .6rem;
+      font-weight: 500;
+      padding: .25rem .5rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      background-color: rgba(234,179,8,.08);
+      display: inline-block;
+      line-height: 1.2;
+    }
+
+    /* Search panel */
+    .search-block {
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+
+    label {
+      font-size: .7rem;
+      font-weight: 500;
+      color: var(--text-dim);
+      display: block;
+    }
+
+    .input-row {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-row input {
+      width: 100%;
+      background-color: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: .6rem .6rem .6rem 2rem;
+      color: var(--text-primary);
+      font-size: .8rem;
+      line-height: 1.2;
+      outline: none;
+    }
+    .input-row input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 8px rgba(234,179,8,.4);
+    }
+
+    .input-row .icon {
+      position: absolute;
+      left: .6rem;
+      font-size: .7rem;
+      color: var(--text-dim);
+      pointer-events: none;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: .5rem;
+    }
+
+    .filter-select {
+      background-color: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: .7rem;
+      padding: .5rem .5rem;
+      width: 100%;
+      outline: none;
+    }
+    .filter-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 8px rgba(234,179,8,.4);
+    }
+
+    button#runQueryBtn {
+      background-color: var(--accent);
+      border: 0;
+      border-radius: var(--radius-sm);
+      font-size: .8rem;
+      line-height: 1.2;
+      padding: .6rem .75rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #0f172a;
+      text-align: center;
+    }
+    button#runQueryBtn:hover {
+      filter: brightness(1.1);
+    }
+
+    /* Entity list (left column of main) */
+    .entity-list {
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+      max-height: calc(100vh - 7rem);
+      overflow-y: auto;
+      scrollbar-color: var(--accent) #0f172a;
+      scrollbar-width: thin;
+    }
+
+    .entity-card {
+      border: 1px solid var(--border-color);
+      background-color: rgba(30,37,57,.6);
+      border-radius: var(--radius-sm);
+      padding: .75rem .75rem .75rem .75rem;
+      cursor: pointer;
+    }
+    .entity-card:hover {
+      background-color: rgba(37,46,73,.9);
+    }
+    .entity-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: .4rem;
+    }
+    .entity-name {
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+    .entity-type {
+      font-size: .6rem;
+      font-weight: 500;
+      color: var(--accent);
+      background-color: rgba(234,179,8,.08);
+      border: 1px solid rgba(234,179,8,.4);
+      border-radius: var(--radius-sm);
+      padding: .15rem .4rem;
+      line-height: 1.2;
+    }
+    .entity-desc {
+      font-size: .7rem;
+      color: var(--text-dim);
+      line-height: 1.4;
+    }
+
+    /* Right column: profile detail */
+    .profile-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: .5rem;
+    }
+
+    .profile-main-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.3;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .networth-line,
+    .influence-line {
+      font-size: .7rem;
+      color: var(--text-dim);
+      line-height: 1.4;
+    }
+    .networth-value {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .4rem;
+    }
+    .tag-pill {
+      font-size: .6rem;
+      line-height: 1.2;
+      padding: .25rem .5rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background-color: #0f172a;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    /* Timeline / influence */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+      font-size: .7rem;
+      line-height: 1.4;
+      max-height: 200px;
+      overflow-y: auto;
+      scrollbar-color: var(--accent) #0f172a;
+      scrollbar-width: thin;
+    }
+    .timeline-item {
+      border-left: 2px solid var(--accent);
+      padding-left: .75rem;
+    }
+    .timeline-year {
+      color: var(--accent);
+      font-weight: 600;
+      font-size: .7rem;
+      margin-bottom: .25rem;
+    }
+    .timeline-note {
+      color: var(--text-primary);
+    }
+    .timeline-src {
+      color: var(--text-dim);
+      font-style: italic;
+      font-size: .65rem;
+    }
+
+    /* Ethics / disclosure */
+    .ethics {
+      font-size: .65rem;
+      line-height: 1.4;
+      color: var(--text-dim);
+    }
+    .ethics strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+      aside {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside>
+    <header class="app-header">
+      <h1 class="brand">
+        <span>Wealth &amp; Influence Observatory</span>
+        <span class="sub">Public-power mapping lab</span>
+      </h1>
+      <small class="badge">alpha</small>
+    </header>
+
+    <div class="card">
+      <div class="section-title">
+        <div class="dot"></div>
+        <div>Search / Filter</div>
+      </div>
+
+      <div class="search-block">
+        <div>
+          <label for="searchInput">Search entity (person / foundation / corp)</label>
+          <div class="input-row">
+            <span class="icon">🔍</span>
+            <input id="searchInput" placeholder="e.g. Rockefeller Foundation" />
+          </div>
+        </div>
+
+        <div class="filters">
+          <div>
+            <label for="sectorSelect">Sector</label>
+            <select id="sectorSelect" class="filter-select">
+              <option value="">Any</option>
+              <option>Energy</option>
+              <option>Finance</option>
+              <option>Philanthropy</option>
+              <option>Tech VC</option>
+              <option>Real Estate</option>
+              <option>Policy / Think Tank</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="regionSelect">Region of Impact</label>
+            <select id="regionSelect" class="filter-select">
+              <option value="">Global</option>
+              <option>US Domestic</option>
+              <option>Latin America</option>
+              <option>Africa</option>
+              <option>Asia-Pacific</option>
+              <option>Europe</option>
+            </select>
+          </div>
+        </div>
+
+        <button id="runQueryBtn">Run Query</button>
+      </div>
+    </div>
+
+    <div class="card alt">
+      <div class="section-title">
+        <div class="dot"></div>
+        <div>Methodology / Ethics</div>
+      </div>
+      <div class="ethics">
+        <p>
+          This project documents <strong>publicly available</strong> information
+          about large concentrations of wealth and institutional power.
+        </p>
+        <p>
+          We do <strong>not</strong> stalk or harass individuals. We do <strong>not</strong> publish private addresses, medical info, family details, or anything non-public.
+        </p>
+        <p>
+          Goal: help the public understand how money flows into
+          policy, media, health, education, environment, war, and food.
+          Transparency ≠ harassment. Transparency = accountability.
+        </p>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main>
+
+    <!-- LEFT COLUMN: ENTITY LIST -->
+    <section class="card" style="display:flex; flex-direction:column; min-height:0;">
+      <div class="section-title">
+        <div class="dot"></div>
+        <div>Entities (Results)</div>
+      </div>
+
+      <div id="entityList" class="entity-list">
+        <!-- Populated by JS. Example static items below -->
+
+        <div class="entity-card" data-entity="rockefeller_foundation">
+          <div class="entity-header">
+            <div class="entity-name">Rockefeller Foundation</div>
+            <div class="entity-type">Philanthropy</div>
+          </div>
+          <div class="entity-desc">
+            Major U.S. philanthropic org founded 1913; funds global health,
+            agriculture, climate, and development initiatives.
+          </div>
+        </div>
+
+        <div class="entity-card" data-entity="standard_oil_legacy">
+          <div class="entity-header">
+            <div class="entity-name">Standard Oil (Legacy Companies)</div>
+            <div class="entity-type">Energy / Industrial</div>
+          </div>
+          <div class="entity-desc">
+            Former monopoly in U.S. oil refining and transport. Broken up
+            by antitrust in 1911 into what later became Exxon, Chevron, etc.
+          </div>
+        </div>
+
+        <div class="entity-card" data-entity="venrock">
+          <div class="entity-header">
+            <div class="entity-name">Venrock</div>
+            <div class="entity-type">Venture Capital</div>
+          </div>
+          <div class="entity-desc">
+            Rockefeller family VC arm. Early investor in tech and health
+            companies, including Silicon Valley startups.
+          </div>
+        </div>
+
+        <div class="entity-card" data-entity="cfr">
+          <div class="entity-header">
+            <div class="entity-name">Council on Foreign Relations (CFR)</div>
+            <div class="entity-type">Policy / Think Tank</div>
+          </div>
+          <div class="entity-desc">
+            Elite U.S. foreign policy think tank. Rockefeller family
+            members have been donors, chairs, and trustees.
+          </div>
+        </div>
+
+        <div class="entity-card" data-entity="rockefeller_center">
+          <div class="entity-header">
+            <div class="entity-name">Rockefeller Center</div>
+            <div class="entity-type">Real Estate</div>
+          </div>
+          <div class="entity-desc">
+            Landmark commercial complex in Midtown Manhattan. Longtime
+            flagship family real-estate asset and symbol of influence.
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN: ENTITY PROFILE -->
+    <section class="card alt" style="min-height:0; display:flex; flex-direction:column; gap:1rem;">
+      <div class="section-title">
+        <div class="dot"></div>
+        <div>Profile / Network Map</div>
+      </div>
+
+      <div id="profileArea">
+        <!-- Dynamic profile gets injected here. We'll render one by default. -->
+
+        <div class="profile-header">
+          <div>
+            <div class="profile-main-name">
+              <span id="profileName">Rockefeller Foundation</span>
+              <span class="entity-type">Philanthropy</span>
+            </div>
+            <div class="networth-line">
+              Estimated assets managed:
+              <span class="networth-value" id="profileAssets">$5B+ (public filings)</span>
+            </div>
+            <div class="influence-line" id="profileMission">
+              Mission focus: global health, climate resilience, food systems,
+              energy transition, data for public good.
+            </div>
+          </div>
+
+          <div class="tag-row" id="profileTags">
+            <div class="tag-pill">Global Health</div>
+            <div class="tag-pill">Climate</div>
+            <div class="tag-pill">Food/Agriculture</div>
+            <div class="tag-pill">Energy Policy</div>
+          </div>
+        </div>
+
+        <hr style="border:0; border-top:1px solid var(--border-color);"/>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+          <!-- INFLUENCE TIMELINE -->
+          <div>
+            <div class="section-title" style="margin-bottom:.5rem;">
+              <div class="dot"></div>
+              <div>Influence Timeline</div>
+            </div>
+            <div class="timeline" id="profileTimeline">
+              <div class="timeline-item">
+                <div class="timeline-year">1913</div>
+                <div class="timeline-note">
+                  Rockefeller Foundation established to fund “the well-being of mankind throughout the world.”
+                </div>
+                <div class="timeline-src">Source: public charter</div>
+              </div>
+
+              <div class="timeline-item">
+                <div class="timeline-year">1940s–60s</div>
+                <div class="timeline-note">
+                  Funds global public health campaigns and agricultural R&amp;D
+                  that feed into the Green Revolution.
+                </div>
+                <div class="timeline-src">Source: annual reports</div>
+              </div>
+
+              <div class="timeline-item">
+                <div class="timeline-year">2000s–2020s</div>
+                <div class="timeline-note">
+                  Money shifts toward climate resilience, pandemic response,
+                  and energy transition in the Global South.
+                </div>
+                <div class="timeline-src">Source: foundation statements</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PUBLIC LINKS / NOTES -->
+          <div>
+            <div class="section-title" style="margin-bottom:.5rem;">
+              <div class="dot"></div>
+              <div>Public Notes</div>
+            </div>
+
+            <div class="ethics" id="profileNotes">
+              <p>
+                • This organization’s board, grants, and partnerships are a
+                major vector of soft power.
+              </p>
+              <p>
+                • Data shown here should come from tax disclosures,
+                SEC-style filings, audited reports, speeches,
+                and other <strong>public</strong> records.
+              </p>
+              <p>
+                • Add links to public Form 990s, press releases, and
+                historical grant databases here.
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // --- Simple in-memory dataset (placeholder) ---
+    const ENTITIES = {
+      "rockefeller_foundation": {
+        name: "Rockefeller Foundation",
+        type: "Philanthropy",
+        assets: "$5B+ (public filings)",
+        mission: "Global health, climate resilience, food security, energy transition.",
+        tags: ["Global Health", "Climate", "Food/Agriculture", "Energy Policy"],
+        timeline: [
+          { year: "1913", note: "Foundation chartered to improve 'the well-being of mankind throughout the world.'", src: "Foundation charter" },
+          { year: "1940s–60s", note: "Backed international health campaigns and funded Green Revolution ag research.", src: "Annual reports" },
+          { year: "2000s–2020s", note: "Focus on climate, pandemic response, African energy infrastructure.", src: "Public statements" },
+        ],
+        notes: [
+          "Board + grant strategy influence global public health priorities.",
+          "Data must come from public filings (IRS Form 990 for US foundations), audited reports, speeches.",
+          "Add grant database links, partner orgs, climate finance announcements."
+        ]
+      },
+
+      "standard_oil_legacy": {
+        name: "Standard Oil (Legacy Companies)",
+        type: "Energy / Industrial",
+        assets: "Historical: controlled ~90% of U.S. oil refining by 1880s.",
+        mission: "Industrial vertical integration of oil: wells → pipelines → refineries → shipping → retail.",
+        tags: ["Oil Refining", "Rail / Logistics", "Vertical Integration"],
+        timeline: [
+          { year: "1870", note: "Standard Oil Company founded by John D. Rockefeller Sr.", src: "Historical record" },
+          { year: "1880s", note: "Standard Oil controls most U.S. refining and distribution.", src: "Congressional testimony" },
+          { year: "1911", note: "U.S. Supreme Court orders breakup into 34 companies, leading to Exxon, Chevron, etc.", src: "SCOTUS decision" }
+        ],
+        notes: [
+          "Example of monopoly power and antitrust response.",
+          "Successor firms remain among the largest energy companies on earth.",
+          "Great case study for 'how old money became modern money.'"
+        ]
+      },
+
+      "venrock": {
+        name: "Venrock",
+        type: "Venture Capital",
+        assets: "Private AUM; historically invested early in Silicon Valley and biotech.",
+        mission: "Fund frontier technology, energy, health, and infrastructure startups.",
+        tags: ["VC", "Tech", "Biotech", "Energy"],
+        timeline: [
+          { year: "1969", note: "Venrock founded (venture arm of the Rockefeller family).", src: "Firm history" },
+          { year: "1970s–80s", note: "Early investments in semiconductor and computing companies.", src: "Press / archives" },
+          { year: "2000s–2020s", note: "Focus on healthtech, cybersecurity, energy transition.", src: "Portfolio summaries" }
+        ],
+        notes: [
+          "Shows how legacy wealth adapts to new industries.",
+          "Useful for understanding influence in tech policy and health data.",
+          "Public sources: partner bios, portfolio announcements, SEC filings from funded startups."
+        ]
+      },
+
+      "cfr": {
+        name: "Council on Foreign Relations (CFR)",
+        type: "Policy / Think Tank",
+        assets: "Endowment + donor network (public annual reports).",
+        mission: "Shape and analyze U.S. foreign policy discourse.",
+        tags: ["Foreign Policy", "Think Tank", "Diplomacy", "Security"],
+        timeline: [
+          { year: "1921", note: "CFR founded post–World War I to guide U.S. global strategy.", src: "CFR history" },
+          { year: "Mid 20th C.", note: "Rockefeller family members serve as donors, directors, chairs.", src: "Org archives" },
+          { year: "Now", note: "Still one of the most influential foreign policy think tanks in the U.S.", src: "Public reports" }
+        ],
+        notes: [
+          "Critical node connecting private wealth to official policy.",
+          "Board membership and donor lists are usually public.",
+          "Good example of 'soft power via expertise.'"
+        ]
+      },
+
+      "rockefeller_center": {
+        name: "Rockefeller Center",
+        type: "Real Estate",
+        assets: "Prime Midtown Manhattan commercial complex (billions in valuation historically).",
+        mission: "Commercial real estate, media tenancy, prestige branding.",
+        tags: ["Real Estate", "NYC", "Media", "Finance"],
+        timeline: [
+          { year: "1930s", note: "Rockefeller Center built during the Great Depression, providing jobs and anchoring Midtown.", src: "NYC historical records" },
+          { year: "Late 20th C.", note: "Home to major media networks and finance firms.", src: "Business press" },
+          { year: "21st C.", note: "Iconic asset symbolizing Rockefeller legacy in NYC real estate.", src: "RE market reports" }
+        ],
+        notes: [
+          "Case study of real estate as durable, prestige power.",
+          "Leases / tenants are typically public info.",
+          "No private residential doxxing here — keep it commercial."
+        ]
+      }
+    };
+
+    // --- DOM refs ---
+    const entityListEl = document.getElementById("entityList");
+    const profileAreaEl = document.getElementById("profileArea");
+    const runQueryBtn = document.getElementById("runQueryBtn");
+
+    // Utility to render profile
+    function renderProfile(entityKey) {
+      const data = ENTITIES[entityKey];
+      if (!data) return;
+
+      profileAreaEl.innerHTML = `
+        <div class="profile-header">
+          <div>
+            <div class="profile-main-name">
+              <span id="profileName">${data.name}</span>
+              <span class="entity-type">${data.type}</span>
+            </div>
+            <div class="networth-line">
+              Snapshot / assets:
+              <span class="networth-value" id="profileAssets">${data.assets}</span>
+            </div>
+            <div class="influence-line" id="profileMission">
+              ${data.mission}
+            </div>
+          </div>
+
+          <div class="tag-row" id="profileTags">
+            ${data.tags.map(t => `<div class="tag-pill">${t}</div>`).join("")}
+          </div>
+        </div>
+
+        <hr style="border:0; border-top:1px solid var(--border-color); margin-top:1rem; margin-bottom:1rem;"/>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+          <div>
+            <div class="section-title" style="margin-bottom:.5rem;">
+              <div class="dot"></div>
+              <div>Influence Timeline</div>
+            </div>
+            <div class="timeline" id="profileTimeline">
+              ${
+                data.timeline.map(item => `
+                  <div class="timeline-item">
+                    <div class="timeline-year">${item.year}</div>
+                    <div class="timeline-note">${item.note}</div>
+                    <div class="timeline-src">Source: ${item.src}</div>
+                  </div>
+                `).join("")
+              }
+            </div>
+          </div>
+
+          <div>
+            <div class="section-title" style="margin-bottom:.5rem;">
+              <div class="dot"></div>
+              <div>Public Notes</div>
+            </div>
+
+            <div class="ethics" id="profileNotes">
+              ${
+                data.notes.map(n => `<p>• ${n}</p>`).join("")
+              }
+              <p>
+                Reminder: All data must be sourced from <strong>public</strong>,
+                lawfully available documents. No harassment, no private targeting.
+              </p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Click handler for each entity card
+    entityListEl.addEventListener("click", e => {
+      const card = e.target.closest(".entity-card");
+      if (!card) return;
+      const key = card.getAttribute("data-entity");
+      renderProfile(key);
+    });
+
+    // Very simple "query" button just filters by text + sector for now
+    runQueryBtn.addEventListener("click", () => {
+      const q = document.getElementById("searchInput").value.toLowerCase().trim();
+      const sector = document.getElementById("sectorSelect").value.toLowerCase().trim();
+
+      // naive filter: hide cards that don't match name + sector in their data
+      const cards = entityListEl.querySelectorAll(".entity-card");
+      cards.forEach(card => {
+        const key = card.getAttribute("data-entity");
+        const data = ENTITIES[key];
+        const matchesText =
+          !q ||
+          data.name.toLowerCase().includes(q) ||
+          data.mission.toLowerCase().includes(q);
+
+        const matchesSector =
+          !sector ||
+          data.type.toLowerCase().includes(sector) ||
+          data.tags.some(t => t.toLowerCase().includes(sector));
+
+        card.style.display = (matchesText && matchesSector) ? "" : "none";
+      });
+    });
+
+    // Initialize default profile
+    renderProfile("rockefeller_foundation");
+  </script>
+</body>
+</html>
